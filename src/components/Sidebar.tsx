@@ -1,5 +1,6 @@
 import type { Schema } from '../types/schema'
 import { SqlInput } from './SqlInput'
+import { ExportButton } from './ExportButton'
 
 const DOTS = [
   'bg-teal-500', 'bg-violet-500', 'bg-rose-500',
@@ -35,6 +36,8 @@ export function Sidebar({ sql, setSql, onVisualize, onReset, error, schema }: Si
 
       {schema && (
         <div className="flex flex-col gap-4 p-3">
+
+          <ExportButton />
 
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400 mb-1.5">
