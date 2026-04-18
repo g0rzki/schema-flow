@@ -1,4 +1,4 @@
-import type { Field, Relation, Schema, Table } from '../types/schema'
+import type { Field, Relation, RelationType, Schema, Table } from '../types/schema'
 
 const INLINE_PK = /primary\s+key/i
 const INLINE_FK = /references\s+(\w+)\s*\((\w+)\)/i
@@ -83,18 +83,31 @@ export function parseSql(sql: string): Schema {
       }
 
       fields.push({ name, type, isPK, isFK, references })
-
-      if (isFK && references) {
-        relations.push({
-          fromTable: tableName,
-          fromField: name,
-          toTable: references.table,
-          toField: references.column,
-        })
-      }
     }
 
     tables.push({ name: tableName, fields })
+
+    // detect relation type
+    const fkFields = fields.filter(f => f.isFK)
+    const hasOwnPK = fields.some(f => f.isPK && !f.isFK)
+    const isJunction = !hasOwnPK && fkFields.length >= 2
+
+    fkFields.forEach(field => {
+      if (!field.references) return
+      const type: RelationType = isJunction
+        ? 'many-to-many'
+        : field.isPK
+          ? 'one-to-one'
+          : 'one-to-many'
+
+      relations.push({
+        fromTable: tableName,
+        fromField: field.name,
+        toTable: field.references.table,
+        toField: field.references.column,
+        type,
+      })
+    })
   }
 
   return { tables, relations }

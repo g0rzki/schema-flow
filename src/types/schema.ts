@@ -14,11 +14,14 @@ export interface Table {
   fields: Field[]
 }
 
+export type RelationType = 'one-to-many' | 'one-to-one' | 'many-to-many'
+
 export interface Relation {
   fromTable: string
   fromField: string
   toTable: string
   toField: string
+  type: RelationType
 }
 
 export interface Schema {
