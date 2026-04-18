@@ -12,11 +12,12 @@ interface SidebarProps {
   setSql: (v: string) => void
   onVisualize: () => void
   onReset: () => void
+  onAutoLayout: () => void
   error: string | null
   schema: Schema | null
 }
 
-export function Sidebar({ sql, setSql, onVisualize, onReset, error, schema }: SidebarProps) {
+export function Sidebar({ sql, setSql, onVisualize, onReset, onAutoLayout, error, schema }: SidebarProps) {
   return (
     <aside className="w-64 flex-shrink-0 flex flex-col border-r border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 overflow-y-auto">
       <div className="px-3 py-3 border-b border-neutral-200 dark:border-neutral-800">
@@ -38,6 +39,15 @@ export function Sidebar({ sql, setSql, onVisualize, onReset, error, schema }: Si
         <div className="flex flex-col gap-4 p-3">
 
           <ExportButton />
+
+          {schema && (
+            <button
+              onClick={onAutoLayout}
+              className="w-full py-1.5 rounded-lg text-xs font-medium border border-neutral-200 dark:border-neutral-700 text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+            >
+              Auto layout
+            </button>
+          )}
 
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400 mb-1.5">

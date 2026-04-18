@@ -28,12 +28,7 @@ function getColor(tableName: string) {
 }
 
 const HANDLE_STYLE = {
-  width: 8,
-  height: 8,
-  border: 'none',
-  background: '#737373',
-  top: '50%',
-  transform: 'translateY(-50%)',
+  width: 8, height: 8, border: 'none', background: '#525252',
 }
 
 export function TableNode({ data }: NodeProps) {
@@ -41,8 +36,13 @@ export function TableNode({ data }: NodeProps) {
   const color = getColor(table.name)
 
   return (
-    <div className="min-w-[220px] rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 overflow-visible shadow-sm text-sm">
-      <div className={`flex items-center gap-2 px-3 py-2 border-b border-neutral-200 dark:border-neutral-700 rounded-t-xl ${color.bg}`}>
+    <div className="min-w-[220px] rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 overflow-hidden shadow-sm text-sm">
+      <Handle type="target" position={Position.Left}  id="left"  style={{ ...HANDLE_STYLE, top: '50%' }} />
+      <Handle type="target" position={Position.Right} id="right" style={{ ...HANDLE_STYLE, top: '50%' }} />
+      <Handle type="source" position={Position.Left}  id="left"  style={{ ...HANDLE_STYLE, top: '50%' }} />
+      <Handle type="source" position={Position.Right} id="right" style={{ ...HANDLE_STYLE, top: '50%' }} />
+
+      <div className={`flex items-center gap-2 px-3 py-2 border-b border-neutral-200 dark:border-neutral-700 ${color.bg}`}>
         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${color.dot}`} />
         <span className={`font-medium text-xs ${color.text}`}>{table.name}</span>
       </div>
@@ -50,41 +50,8 @@ export function TableNode({ data }: NodeProps) {
       {table.fields.map(field => (
         <div
           key={field.name}
-          className="relative flex items-center gap-2 px-3 py-1.5 border-b border-neutral-100 dark:border-neutral-800 last:border-b-0 last:rounded-b-xl"
+          className="flex items-center gap-2 px-3 py-1.5 border-b border-neutral-100 dark:border-neutral-800 last:border-b-0"
         >
-          {field.isFK && (
-            <>
-              <Handle
-                type="source"
-                position={Position.Left}
-                id={`${table.name}__${field.name}__source__left`}
-                style={{ ...HANDLE_STYLE, left: -4 }}
-              />
-              <Handle
-                type="source"
-                position={Position.Right}
-                id={`${table.name}__${field.name}__source__right`}
-                style={{ ...HANDLE_STYLE, right: -4 }}
-              />
-            </>
-          )}
-          {field.isPK && (
-            <>
-              <Handle
-                type="target"
-                position={Position.Left}
-                id={`${table.name}__${field.name}__target__left`}
-                style={{ ...HANDLE_STYLE, left: -4 }}
-              />
-              <Handle
-                type="target"
-                position={Position.Right}
-                id={`${table.name}__${field.name}__target__right`}
-                style={{ ...HANDLE_STYLE, right: -4 }}
-              />
-            </>
-          )}
-
           <div className="flex gap-1 flex-shrink-0">
             {field.isPK && (
               <span className="text-[10px] px-1 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300 font-medium">PK</span>

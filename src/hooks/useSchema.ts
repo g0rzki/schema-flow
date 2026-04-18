@@ -2,12 +2,15 @@ import { useCallback, useState } from 'react'
 import { applyNodeChanges } from '@xyflow/react'
 import type { Edge, Node, NodeChange } from '@xyflow/react'
 import { parseSql } from '../lib/sqlParser'
+import { applyDagreLayout } from '../lib/layout'
 import type { RelationType, Schema } from '../types/schema'
 
+const TABLE_WIDTH = 220
+
 const RELATION_STYLE: Record<RelationType, { stroke: string; strokeDasharray?: string }> = {
-  'one-to-many': { stroke: '#a3a3a3' },
-  'one-to-one':  { stroke: '#60a5fa' },
-  'many-to-many':{ stroke: '#f59e0b', strokeDasharray: '6 3' },
+  'one-to-many':  { stroke: '#a3a3a3' },
+  'one-to-one':   { stroke: '#60a5fa' },
+  'many-to-many': { stroke: '#f59e0b', strokeDasharray: '6 3' },
 }
 
 const RELATION_MARKER_END: Record<RelationType, { type: 'arrowclosed'; width: number; height: number; color: string }> = {
@@ -22,26 +25,13 @@ const RELATION_MARKER_START: Record<RelationType, { type: 'arrow'; width: number
   'many-to-many': { type: 'arrow', width: 14, height: 14, color: '#f59e0b' },
 }
 
-const TABLE_WIDTH = 220
-const TABLE_HEADER = 36
-const FIELD_HEIGHT = 28
-const COL_GAP = 80
-const ROW_GAP = 60
-
 function buildNodes(schema: Schema): Node[] {
-  return schema.tables.map((table, i) => {
-    const col = i % 3
-    const row = Math.floor(i / 3)
-    return {
-      id: table.name,
-      type: 'tableNode',
-      position: {
-        x: col * (TABLE_WIDTH + COL_GAP),
-        y: row * (TABLE_HEADER + table.fields.length * FIELD_HEIGHT + ROW_GAP),
-      },
-      data: { table },
-    }
-  })
+  return schema.tables.map((table, i) => ({
+    id: table.name,
+    type: 'tableNode',
+    position: { x: i * 300, y: 0 },
+    data: { table },
+  }))
 }
 
 function buildEdges(schema: Schema, nodes: Node[]): Edge[] {
@@ -55,9 +45,9 @@ function buildEdges(schema: Schema, nodes: Node[]): Edge[] {
     return {
       id: `e-${i}-${rel.fromTable}-${rel.fromField}`,
       source: rel.fromTable,
-      sourceHandle: `${rel.fromTable}__${rel.fromField}__source__${srcRight ? 'left' : 'right'}`,
+      sourceHandle: srcRight ? 'left' : 'right',
       target: rel.toTable,
-      targetHandle: `${rel.toTable}__${rel.toField}__target__${srcRight ? 'right' : 'left'}`,
+      targetHandle: srcRight ? 'right' : 'left',
       type: 'smoothstep',
       animated: false,
       style: { strokeWidth: 1.5, ...RELATION_STYLE[rel.type] },
@@ -96,15 +86,25 @@ export function useSchema() {
         setError('No valid CREATE TABLE statements found.')
         return
       }
-      const newNodes = buildNodes(parsed)
+      const rawNodes = buildNodes(parsed)
+      const rawEdges = buildEdges(parsed, rawNodes)
+      const laidNodes = applyDagreLayout(rawNodes, rawEdges)
       setSchema(parsed)
-      setNodes(newNodes)
-      setEdges(buildEdges(parsed, newNodes))
+      setNodes(laidNodes)
+      setEdges(buildEdges(parsed, laidNodes))
       setError(null)
-    } catch {
+    } catch (err) {
+      console.error(err)
       setError('Failed to parse SQL. Check your syntax.')
     }
   }, [sql])
+
+  const autoLayout = useCallback(() => {
+    if (!schema) return
+    const laidNodes = applyDagreLayout(nodes, edges)
+    setNodes(laidNodes)
+    setEdges(buildEdges(schema, laidNodes))
+  }, [nodes, edges, schema])
 
   const reset = useCallback(() => {
     setSql('')
@@ -114,5 +114,5 @@ export function useSchema() {
     setError(null)
   }, [])
 
-  return { sql, setSql, schema, nodes, edges, error, visualize, reset, onNodesChange }
+  return { sql, setSql, schema, nodes, edges, error, visualize, reset, onNodesChange, autoLayout }
 }
