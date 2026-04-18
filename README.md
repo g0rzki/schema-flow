@@ -1,73 +1,126 @@
-# React + TypeScript + Vite
+# schema-flow
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> Narzędzie do wizualizacji schematów baz danych. Wklejasz instrukcje `CREATE TABLE`, dostajesz interaktywny diagram węzłowy z automatycznie narysowanymi relacjami kluczy obcych.
 
-Currently, two official plugins are available:
+Projekt budowany jako samodzielna realizacja portfolio — od zera, bez gotowych szablonów. Cel: działające, publicznie dostępne narzędzie z realnym use-casem dla każdego pracującego z SQL.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## Demo
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+**Live:** https://schema.gorzkiewicz.dev
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Co pokazuje ten projekt technicznie
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- **Parser SQL** — wyodrębnianie tabel, kolumn, typów, kluczy głównych i obcych z surowego DDL bez zewnętrznych bibliotek
+- **Wizualizacja grafowa** — interaktywny canvas z węzłami i krawędziami (React Flow), przeciąganie tabel, auto-layout
+- **Architektura frontend** — podział na warstwy (parser → typy → stan → widok), custom hooks, komponenty bez side-effectów
+- **TypeScript** — pełne typowanie od parsera po komponenty, brak `any`
+- **Deploy** — Vercel, automatyczny z GitHuba
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Funkcjonalności
+
+- Parsowanie `CREATE TABLE` — kolumny, typy, `PRIMARY KEY`, `REFERENCES`
+- Interaktywny diagram — węzły z listą kolumn i oznaczeniami PK/FK, przeciąganie, zoom, pan
+- Automatyczne rysowanie relacji FK jako krawędzie między węzłami
+- Sidebar z listą tabel i relacji
+- Eksport diagramu do SVG
+- Tryb ciemny
+
+---
+
+## Stack
+
+| Warstwa     | Technologia              |
+|-------------|--------------------------|
+| Frontend    | React 19 + TypeScript    |
+| Bundler     | Vite                     |
+| Canvas      | React Flow (`@xyflow/react`) |
+| Style       | Tailwind CSS v4          |
+| Deploy      | Vercel                   |
+| Domeny      | Cloudflare (gorzkiewicz.dev) |
+
+---
+
+## Struktura projektu
+
+```
+schema-flow/
+├── public/
+├── src/
+│   ├── components/
+│   │   ├── SqlInput.tsx       # textarea + przycisk Visualize
+│   │   ├── SchemaCanvas.tsx   # React Flow canvas
+│   │   ├── TableNode.tsx      # custom node: nagłówek + kolumny z PK/FK
+│   │   └── Sidebar.tsx        # lista tabel i relacji
+│   ├── hooks/
+│   │   └── useSchema.ts       # stan parsowania, nodes i edges do canvasu
+│   ├── lib/
+│   │   └── sqlParser.ts       # parser CREATE TABLE → Schema
+│   ├── types/
+│   │   └── schema.ts          # typy Table, Field, Relation, Schema
+│   ├── App.tsx
+│   ├── main.tsx
+│   └── index.css
+├── index.html
+└── README.md
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Uruchomienie lokalne
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+**Wymagania:** Node.js 18+
+
+```bash
+git clone https://github.com/g0rzki/schema-flow.git
+cd schema-flow
+npm install
+npm run dev
 ```
+
+App: `http://localhost:5173`
+
+---
+
+## Przykładowe wejście
+
+```sql
+CREATE TABLE users (
+  id UUID PRIMARY KEY,
+  email TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE posts (
+  id UUID PRIMARY KEY,
+  user_id UUID REFERENCES users(id),
+  title TEXT NOT NULL,
+  body TEXT
+);
+
+CREATE TABLE comments (
+  id UUID PRIMARY KEY,
+  post_id UUID REFERENCES posts(id),
+  user_id UUID REFERENCES users(id),
+  body TEXT NOT NULL
+);
+```
+
+---
+
+## Roadmap
+
+- [x] Setup projektu, struktura, Vite + React + Tailwind
+- [ ] Typy i parser SQL (`CREATE TABLE` → AST)
+- [ ] Canvas z węzłami tabel (React Flow)
+- [ ] Automatyczne krawędzie FK
+- [ ] Sidebar z listą tabel i relacji
+- [ ] Eksport do SVG
+- [ ] Import z pliku `.sql`
+- [ ] Shareable URL (schema zakodowana w hashu)
+- [ ] Minimap
