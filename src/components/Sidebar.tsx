@@ -22,7 +22,7 @@ export function Sidebar({ sql, setSql, onVisualize, onReset, onAutoLayout, error
     <aside className="w-64 flex-shrink-0 flex flex-col border-r border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 overflow-y-auto">
       <div className="px-3 py-3 border-b border-neutral-200 dark:border-neutral-800">
         <span className="text-xs font-semibold tracking-widest text-neutral-400 uppercase">
-          schema-flow
+          schema flow
         </span>
       </div>
 
