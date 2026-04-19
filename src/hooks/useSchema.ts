@@ -1,8 +1,9 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { applyNodeChanges } from '@xyflow/react'
 import type { Edge, Node, NodeChange } from '@xyflow/react'
 import { parseSql } from '../lib/sqlParser'
 import { applyDagreLayout } from '../lib/layout'
+import { DEFAULT_SQL } from '../lib/defaultSchema'
 import type { RelationType, Schema } from '../types/schema'
 
 const TABLE_WIDTH = 220
@@ -60,12 +61,35 @@ function buildEdges(schema: Schema, nodes: Node[]): Edge[] {
   })
 }
 
+function parseAndLayout(rawSql: string): { schema: Schema; nodes: Node[]; edges: Edge[] } | null {
+  try {
+    const schema = parseSql(rawSql)
+    if (schema.tables.length === 0) return null
+    const rawNodes = buildNodes(schema)
+    const rawEdges = buildEdges(schema, rawNodes)
+    const nodes = applyDagreLayout(rawNodes, rawEdges)
+    const edges = buildEdges(schema, nodes)
+    return { schema, nodes, edges }
+  } catch {
+    return null
+  }
+}
+
 export function useSchema() {
-  const [sql, setSql] = useState('')
+  const [sql, setSql] = useState(DEFAULT_SQL)
   const [schema, setSchema] = useState<Schema | null>(null)
   const [nodes, setNodes] = useState<Node[]>([])
   const [edges, setEdges] = useState<Edge[]>([])
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const result = parseAndLayout(DEFAULT_SQL)
+    if (result) {
+      setSchema(result.schema)
+      setNodes(result.nodes)
+      setEdges(result.edges)
+    }
+  }, [])
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
@@ -80,23 +104,15 @@ export function useSchema() {
 
   const visualize = useCallback(() => {
     if (!sql.trim()) return
-    try {
-      const parsed = parseSql(sql)
-      if (parsed.tables.length === 0) {
-        setError('No valid CREATE TABLE statements found.')
-        return
-      }
-      const rawNodes = buildNodes(parsed)
-      const rawEdges = buildEdges(parsed, rawNodes)
-      const laidNodes = applyDagreLayout(rawNodes, rawEdges)
-      setSchema(parsed)
-      setNodes(laidNodes)
-      setEdges(buildEdges(parsed, laidNodes))
-      setError(null)
-    } catch (err) {
-      console.error(err)
+    const result = parseAndLayout(sql)
+    if (!result) {
       setError('Failed to parse SQL. Check your syntax.')
+      return
     }
+    setSchema(result.schema)
+    setNodes(result.nodes)
+    setEdges(result.edges)
+    setError(null)
   }, [sql])
 
   const autoLayout = useCallback(() => {
@@ -107,10 +123,13 @@ export function useSchema() {
   }, [nodes, edges, schema])
 
   const reset = useCallback(() => {
-    setSql('')
-    setSchema(null)
-    setNodes([])
-    setEdges([])
+    setSql(DEFAULT_SQL)
+    const result = parseAndLayout(DEFAULT_SQL)
+    if (result) {
+      setSchema(result.schema)
+      setNodes(result.nodes)
+      setEdges(result.edges)
+    }
     setError(null)
   }, [])
 
