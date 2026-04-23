@@ -31,8 +31,7 @@ Projekt budowany jako samodzielna realizacja portfolio — od zera, bez gotowych
 - Automatyczne wykrywanie i rysowanie relacji FK z rozróżnieniem typów (one-to-many, one-to-one, many-to-many)
 - Auto-layout — dagre układa węzły w czytelną hierarchię po kliknięciu Visualize lub Auto layout
 - Sidebar z listą tabel, relacji i legendą typów krawędzi
-- Eksport diagramu do PNG (2x) i SVG
-- Tryb ciemny
+- Eksport diagramu do PNG
 
 ---
 
@@ -55,21 +54,23 @@ Projekt budowany jako samodzielna realizacja portfolio — od zera, bez gotowych
 
 ```
 schema-flow/
-├── public/
 ├── src/
 │   ├── components/
-│   │   ├── SqlInput.tsx       # textarea + przycisk Visualize
-│   │   ├── SchemaCanvas.tsx   # React Flow canvas
-│   │   ├── TableNode.tsx      # custom node: nagłówek + kolumny z PK/FK
-│   │   ├── Sidebar.tsx        # lista tabel, relacji i legenda
-│   │   └── ExportButton.tsx   # eksport PNG i SVG
+│   │   ├── SqlInput.tsx        # textarea + przycisk Visualize
+│   │   ├── SchemaCanvas.tsx    # React Flow canvas
+│   │   ├── TableNode.tsx       # custom node: nagłówek + kolumny z PK/FK
+│   │   ├── Sidebar.tsx         # lista tabel, relacji i legenda
+│   │   ├── ExportButton.tsx    # eksport PNG
+│   │   ├── ShareButton.tsx     # kopiowanie shareable URL
+│   │   └── ImportButton.tsx    # import z pliku .sql
 │   ├── hooks/
-│   │   └── useSchema.ts       # stan parsowania, nodes i edges do canvasu
+│   │   └── useSchema.ts        # stan parsowania, nodes i edges do canvasu
 │   ├── lib/
-│   │   ├── sqlParser.ts       # parser CREATE TABLE → Schema
-│   │   └── layout.ts          # auto-layout z dagre
+│   │   ├── sqlParser.ts        # parser CREATE TABLE → Schema
+│   │   ├── layout.ts           # auto-layout z dagre
+│   │   └── defaultSchema.ts    # domyślny przykładowy schemat
 │   ├── types/
-│   │   └── schema.ts          # typy Table, Field, Relation, Schema
+│   │   └── schema.ts           # typy Table, Field, Relation, Schema
 │   ├── App.tsx
 │   ├── main.tsx
 │   └── index.css
@@ -129,9 +130,9 @@ CREATE TABLE comments (
 - [x] Auto-layout (dagre)
 - [x] Sidebar z listą tabel, relacji i legendą
 - [x] Eksport do PNG i SVG
-- [ ] Domyślny przykładowy schemat przy starcie
-- [ ] Shareable URL (schemat zakodowany w hashu)
-- [ ] Import z pliku `.sql`
-- [ ] Minimap
+- [x] Domyślny przykładowy schemat przy starcie
+- [x] Shareable URL (schemat zakodowany w hashu)
+- [x] Import z pliku `.sql`
+- [x] Minimap
 - [ ] Skróty klawiszowe
 - [ ] Poprawki UI

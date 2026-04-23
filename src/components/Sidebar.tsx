@@ -1,6 +1,8 @@
 import type { Schema } from '../types/schema'
 import { SqlInput } from './SqlInput'
 import { ExportButton } from './ExportButton'
+import { ShareButton } from './ShareButton'
+import { ImportButton } from './ImportButton'
 
 const DOTS = [
   'bg-teal-500', 'bg-violet-500', 'bg-rose-500',
@@ -13,16 +15,18 @@ interface SidebarProps {
   onVisualize: () => void
   onReset: () => void
   onAutoLayout: () => void
+  onCopyShareLink: () => void
+  onImport: (sql: string) => void
   error: string | null
   schema: Schema | null
 }
 
-export function Sidebar({ sql, setSql, onVisualize, onReset, onAutoLayout, error, schema }: SidebarProps) {
+export function Sidebar({ sql, setSql, onVisualize, onReset, onAutoLayout, onCopyShareLink, onImport, error, schema }: SidebarProps) {
   return (
     <aside className="w-64 flex-shrink-0 flex flex-col border-r border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 overflow-y-auto">
       <div className="px-3 py-3 border-b border-neutral-200 dark:border-neutral-800">
         <span className="text-xs font-semibold tracking-widest text-neutral-400 uppercase">
-          schema flow
+          schema-flow
         </span>
       </div>
 
@@ -39,6 +43,8 @@ export function Sidebar({ sql, setSql, onVisualize, onReset, onAutoLayout, error
         <div className="flex flex-col gap-4 p-3">
 
           <ExportButton />
+          <ShareButton onCopy={onCopyShareLink} />
+          <ImportButton onImport={onImport} />
 
           {schema && (
             <button

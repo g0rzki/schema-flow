@@ -26,6 +26,29 @@ const RELATION_MARKER_START: Record<RelationType, { type: 'arrow'; width: number
   'many-to-many': { type: 'arrow', width: 14, height: 14, color: '#f59e0b' },
 }
 
+async function encodeSql(sql: string): Promise<string> {
+  const stream = new CompressionStream('deflate-raw')
+  const writer = stream.writable.getWriter()
+  writer.write(new TextEncoder().encode(sql))
+  writer.close()
+  const compressed = await new Response(stream.readable).arrayBuffer()
+  return btoa(String.fromCharCode(...new Uint8Array(compressed)))
+}
+
+async function decodeSql(hash: string): Promise<string | null> {
+  try {
+    const bytes = Uint8Array.from(atob(hash), c => c.charCodeAt(0))
+    const stream = new DecompressionStream('deflate-raw')
+    const writer = stream.writable.getWriter()
+    writer.write(bytes)
+    writer.close()
+    const buf = await new Response(stream.readable).arrayBuffer()
+    return new TextDecoder().decode(buf)
+  } catch {
+    return null
+  }
+}
+
 function buildNodes(schema: Schema): Node[] {
   return schema.tables.map((table, i) => ({
     id: table.name,
@@ -83,11 +106,25 @@ export function useSchema() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const result = parseAndLayout(DEFAULT_SQL)
-    if (result) {
-      setSchema(result.schema)
-      setNodes(result.nodes)
-      setEdges(result.edges)
+    const hash = window.location.hash.slice(1)
+    if (hash) {
+      decodeSql(hash).then(decoded => {
+        const initial = decoded ?? DEFAULT_SQL
+        setSql(initial)
+        const result = parseAndLayout(initial)
+        if (result) {
+          setSchema(result.schema)
+          setNodes(result.nodes)
+          setEdges(result.edges)
+        }
+      })
+    } else {
+      const result = parseAndLayout(DEFAULT_SQL)
+      if (result) {
+        setSchema(result.schema)
+        setNodes(result.nodes)
+        setEdges(result.edges)
+      }
     }
   }, [])
 
@@ -102,7 +139,7 @@ export function useSchema() {
     [schema]
   )
 
-  const visualize = useCallback(() => {
+  const visualize = useCallback(async () => {
     if (!sql.trim()) return
     const result = parseAndLayout(sql)
     if (!result) {
@@ -113,6 +150,7 @@ export function useSchema() {
     setNodes(result.nodes)
     setEdges(result.edges)
     setError(null)
+    window.location.hash = await encodeSql(sql)
   }, [sql])
 
   const autoLayout = useCallback(() => {
@@ -123,15 +161,32 @@ export function useSchema() {
   }, [nodes, edges, schema])
 
   const reset = useCallback(() => {
-    setSql(DEFAULT_SQL)
-    const result = parseAndLayout(DEFAULT_SQL)
-    if (result) {
-      setSchema(result.schema)
-      setNodes(result.nodes)
-      setEdges(result.edges)
+    setSql('')
+    setSchema(null)
+    setNodes([])
+    setEdges([])
+    setError(null)
+    window.location.hash = ''
+  }, [])
+
+  const importSql = useCallback((content: string) => {
+    setSql(content)
+    const result = parseAndLayout(content)
+    if (!result) {
+      setError('Failed to parse SQL. Check your syntax.')
+      return
     }
+    setSchema(result.schema)
+    setNodes(result.nodes)
+    setEdges(result.edges)
     setError(null)
   }, [])
 
-  return { sql, setSql, schema, nodes, edges, error, visualize, reset, onNodesChange, autoLayout }
+  const copyShareLink = useCallback(async () => {
+    const hash = await encodeSql(sql)
+    const url = `${window.location.origin}${window.location.pathname}#${hash}`
+    navigator.clipboard.writeText(url)
+  }, [sql])
+
+  return { sql, setSql, schema, nodes, edges, error, visualize, reset, onNodesChange, autoLayout, copyShareLink, importSql }
 }

@@ -4,7 +4,7 @@ import { Sidebar } from './components/Sidebar'
 import { SchemaCanvas } from './components/SchemaCanvas'
 
 export default function App() {
-  const { sql, setSql, schema, nodes, edges, error, visualize, reset, onNodesChange, autoLayout } = useSchema()
+  const { sql, setSql, schema, nodes, edges, error, visualize, reset, onNodesChange, autoLayout, copyShareLink, importSql } = useSchema()
 
   return (
     <ReactFlowProvider>
@@ -15,6 +15,8 @@ export default function App() {
           onVisualize={visualize}
           onReset={reset}
           onAutoLayout={autoLayout}
+          onCopyShareLink={copyShareLink}
+          onImport={importSql}
           error={error}
           schema={schema}
         />
